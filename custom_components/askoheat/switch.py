@@ -11,6 +11,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from . import AskoheatConfigEntry, AskoheatData
 from .const import (
+    CON_AUTO_HEATER_OFF_SETTING,
     CON_INPUT_SETTING,
     CON_SUMMERTIME_BIAS,
     INPUT_SETTING_ANALOG,
@@ -23,9 +24,10 @@ from .entity import AskoheatEntity
 
 @dataclass(frozen=True, kw_only=True)
 class AskoheatBitSwitchDescription(SwitchEntityDescription):
-    """Description for a bit-flag switch in CON_INPUT_SETTING."""
+    """Description for a bit-flag switch."""
 
     bit_mask: int
+    register_key: str = CON_INPUT_SETTING
 
 
 BIT_SWITCH_DESCRIPTIONS: tuple[AskoheatBitSwitchDescription, ...] = (
@@ -59,6 +61,35 @@ BIT_SWITCH_DESCRIPTIONS: tuple[AskoheatBitSwitchDescription, ...] = (
         name="Feed-in input enabled",
         bit_mask=INPUT_SETTING_FEEDIN,
     ),
+    # Auto-off settings (CON_AUTO_HEATER_OFF_SETTING register)
+    AskoheatBitSwitchDescription(
+        key="auto_off_setpoint",
+        translation_key="auto_off_setpoint",
+        name="Auto-off for setpoint mode",
+        bit_mask=0x01,
+        register_key=CON_AUTO_HEATER_OFF_SETTING,
+    ),
+    AskoheatBitSwitchDescription(
+        key="auto_off_feedin",
+        translation_key="auto_off_feedin",
+        name="Auto-off for feed-in mode",
+        bit_mask=0x02,
+        register_key=CON_AUTO_HEATER_OFF_SETTING,
+    ),
+    AskoheatBitSwitchDescription(
+        key="auto_off_heat_pump",
+        translation_key="auto_off_heat_pump",
+        name="Auto-off for heat pump mode",
+        bit_mask=0x04,
+        register_key=CON_AUTO_HEATER_OFF_SETTING,
+    ),
+    AskoheatBitSwitchDescription(
+        key="auto_off_analog",
+        translation_key="auto_off_analog",
+        name="Auto-off for analog input mode",
+        bit_mask=0x08,
+        register_key=CON_AUTO_HEATER_OFF_SETTING,
+    ),
 )
 
 
@@ -88,7 +119,7 @@ class AskoheatBitSwitch(AskoheatEntity, SwitchEntity):
         """Return true if the bit is set."""
         if self.coordinator.data is None:
             return None
-        raw = self.coordinator.data.get(CON_INPUT_SETTING)
+        raw = self.coordinator.data.get(self.entity_description.register_key)
         if raw is None:
             return None
         try:
@@ -106,7 +137,7 @@ class AskoheatBitSwitch(AskoheatEntity, SwitchEntity):
 
     async def _set_bit(self, on: bool) -> None:
         """Read current value, flip the bit, and write back."""
-        raw = (self.coordinator.data or {}).get(CON_INPUT_SETTING, "0")
+        raw = (self.coordinator.data or {}).get(self.entity_description.register_key, "0")
         try:
             current = int(raw)
         except (ValueError, TypeError):
@@ -117,7 +148,7 @@ class AskoheatBitSwitch(AskoheatEntity, SwitchEntity):
         else:
             new_val = current & ~self.entity_description.bit_mask
 
-        await self._data.client.patch_con({CON_INPUT_SETTING: str(new_val)})
+        await self._data.client.patch_con({self.entity_description.register_key: str(new_val)})
         await self.coordinator.async_request_refresh()
 
 

@@ -31,7 +31,9 @@ async def async_get_config_entry_diagnostics(
         "ema_data": async_redact_data(
             data.ema_coordinator.data or {}, TO_REDACT
         ),
-        "slow_data": data.slow_coordinator.data or {},
+        "slow_data": async_redact_data(
+            data.slow_coordinator.data or {}, TO_REDACT
+        ),
         "heartbeat": {
             "active": data.last_setpoint > 0,
             "last_setpoint": data.last_setpoint,

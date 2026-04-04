@@ -29,13 +29,13 @@ from .entity import AskoheatEntity
 
 _LOGGER = logging.getLogger(__name__)
 
-# Operation mode constants
+# Operation mode constants matching design doc
 STATE_OFF = "off"
-STATE_PERFORMANCE = "performance"
-STATE_HEAT_PUMP = "heat_pump"
-STATE_ELECTRIC = "electric"
+STATE_AUTO = "performance"  # Auto setpoint mode (HA uses "performance" for optimized heating)
+STATE_HEAT = "heat_pump"  # Manual step control (HA uses "heat_pump" as closest match)
+STATE_FEEDIN = "electric"  # PV surplus / feedin mode (HA uses "electric")
 
-OPERATION_LIST = [STATE_OFF, STATE_PERFORMANCE, STATE_HEAT_PUMP, STATE_ELECTRIC]
+OPERATION_LIST = [STATE_OFF, STATE_AUTO, STATE_HEAT, STATE_FEEDIN]
 
 
 class AskoheatWaterHeater(AskoheatEntity, WaterHeaterEntity):
@@ -93,11 +93,15 @@ class AskoheatWaterHeater(AskoheatEntity, WaterHeaterEntity):
 
     @property
     def current_operation(self) -> str:
-        """Derive the current operation mode from EMA data."""
+        """Derive the current operation mode from EMA data.
+
+        Priority: feedin > setpoint > step > off.
+        Check feedin first since it can be active alongside other values.
+        """
         if self.coordinator.data is None:
             return STATE_OFF
 
-        # Check status register
+        # Check if any relays are active at all
         raw_status = self.coordinator.data.get(EMA_STATUS)
         if raw_status is not None:
             try:
@@ -106,12 +110,21 @@ class AskoheatWaterHeater(AskoheatEntity, WaterHeaterEntity):
             except (ValueError, TypeError):
                 pass
 
+        # Check feedin value first (highest priority when active)
+        raw_feedin = self.coordinator.data.get(EMA_LOAD_FEEDIN_VALUE)
+        if raw_feedin is not None:
+            try:
+                if int(float(raw_feedin)) != 0:
+                    return STATE_FEEDIN
+            except (ValueError, TypeError):
+                pass
+
         # Check setpoint value
         raw_setpoint = self.coordinator.data.get(EMA_LOAD_SETPOINT_VALUE)
         if raw_setpoint is not None:
             try:
                 if int(float(raw_setpoint)) > 0:
-                    return STATE_PERFORMANCE
+                    return STATE_AUTO
             except (ValueError, TypeError):
                 pass
 
@@ -120,7 +133,7 @@ class AskoheatWaterHeater(AskoheatEntity, WaterHeaterEntity):
         if raw_step is not None:
             try:
                 if int(raw_step) > 0:
-                    return STATE_HEAT_PUMP
+                    return STATE_HEAT
             except (ValueError, TypeError):
                 pass
 
@@ -147,7 +160,7 @@ class AskoheatWaterHeater(AskoheatEntity, WaterHeaterEntity):
             )
             self._data.last_setpoint = 0
 
-        elif operation_mode == STATE_PERFORMANCE:
+        elif operation_mode == STATE_AUTO:
             # Use max power from par_data as default setpoint
             max_power = self._par_data.get(PAR_MAX_POWER, 3000)
             try:
@@ -162,7 +175,7 @@ class AskoheatWaterHeater(AskoheatEntity, WaterHeaterEntity):
             )
             self._data.last_setpoint = setpoint
 
-        elif operation_mode == STATE_HEAT_PUMP:
+        elif operation_mode == STATE_HEAT:
             # Manual step mode: full power (step 7)
             await self._data.client.patch_ema(
                 {
@@ -172,7 +185,7 @@ class AskoheatWaterHeater(AskoheatEntity, WaterHeaterEntity):
             )
             self._data.last_setpoint = 0
 
-        elif operation_mode == STATE_ELECTRIC:
+        elif operation_mode == STATE_FEEDIN:
             # Feed-in mode: set a feed-in value
             max_power = self._par_data.get(PAR_MAX_POWER, 3000)
             try:

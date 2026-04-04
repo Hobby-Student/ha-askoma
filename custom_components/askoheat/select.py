@@ -16,6 +16,9 @@ from .const import (
     CON_HEAT_PUMP_REQUEST_OFF_STEP,
     CON_HEAT_PUMP_REQUEST_ON_STEP,
     CON_HOUSETYPE,
+    CON_LEGIO_SETTING,
+    CON_RTU_ENERGY_METER_TYPE,
+    CON_TEMPERATURE_SETTING,
     EMA_SET_HEATER_STEP,
     con_analog_threshold_step,
 )
@@ -123,6 +126,44 @@ CON_SELECT_DESCRIPTIONS: tuple[AskoheatSelectEntityDescription, ...] = (
         patch_target="con",
         coordinator_type="slow",
         options_map=STEP_OPTIONS_MAP,
+    ),
+    AskoheatSelectEntityDescription(
+        key="legio_setting",
+        translation_key="legio_setting",
+        name="Legionella protection setting",
+        options=["Off", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday", "Daily"],
+        json_key=CON_LEGIO_SETTING,
+        patch_target="con",
+        coordinator_type="slow",
+        options_map={
+            "Off": "0", "Monday": "1", "Tuesday": "2", "Wednesday": "3",
+            "Thursday": "4", "Friday": "5", "Saturday": "6", "Sunday": "7", "Daily": "8",
+        },
+    ),
+    AskoheatSelectEntityDescription(
+        key="temperature_setting",
+        translation_key="temperature_setting",
+        name="Temperature sensor selection",
+        options=["Sensor 0", "Sensor 1", "Sensor 2", "Sensor 3", "Sensor 4"],
+        json_key=CON_TEMPERATURE_SETTING,
+        patch_target="con",
+        coordinator_type="slow",
+        options_map={
+            "Sensor 0": "0", "Sensor 1": "1", "Sensor 2": "2",
+            "Sensor 3": "3", "Sensor 4": "4",
+        },
+    ),
+    AskoheatSelectEntityDescription(
+        key="energy_meter_type",
+        translation_key="energy_meter_type",
+        name="Energy meter type",
+        options=["None", "ABB B23", "Eastron SDM630", "Eastron SDM72D"],
+        json_key=CON_RTU_ENERGY_METER_TYPE,
+        patch_target="con",
+        coordinator_type="slow",
+        options_map={
+            "None": "0", "ABB B23": "1", "Eastron SDM630": "2", "Eastron SDM72D": "3",
+        },
     ),
 )
 

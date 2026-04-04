@@ -8,12 +8,14 @@ from dataclasses import dataclass
 from datetime import timedelta
 from typing import Any
 
+import aiohttp
+
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST, Platform
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.exceptions import ConfigEntryNotReady
 
-from .api import AskoheatApiClient
+from .api import AskoheatApiClient, AskoheatConnectionError
 from .const import (
     CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL, DOMAIN,
     HEARTBEAT_INTERVAL, EMA_LOAD_SETPOINT_VALUE,
@@ -55,11 +57,27 @@ async def async_setup_entry(hass: HomeAssistant, entry: AskoheatConfigEntry) -> 
         CONF_SCAN_INTERVAL, entry.data.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
     )
 
-    session = async_get_clientsession(hass)
+    # Create dedicated session with keep-alive disabled (device quirk: stale connections cause EOF)
+    connector = aiohttp.TCPConnector(force_close=True)
+    session = aiohttp.ClientSession(
+        connector=connector, timeout=aiohttp.ClientTimeout(total=5)
+    )
     client = AskoheatApiClient(host=host, session=session)
 
-    par_data = await client.get_par()
-    connected_sensors = await client.detect_connected_sensors()
+    try:
+        par_data = await client.get_par()
+        connected_sensors = await client.detect_connected_sensors()
+    except AskoheatConnectionError as err:
+        await session.close()
+        raise ConfigEntryNotReady(f"Cannot connect to Askoheat at {host}") from err
+
+    # Warn if load setpoint is not enabled in device settings
+    if entry.data.get("setpoint_warning"):
+        _LOGGER.warning(
+            "Askoheat at %s: Load Setpoint input is not enabled in the device's "
+            "web interface Input Settings. External control may not work until enabled",
+            host,
+        )
 
     ema_coordinator = AskoheatEmaCoordinator(
         hass=hass, client=client, update_interval=timedelta(seconds=scan_interval),
@@ -107,4 +125,5 @@ async def _async_update_options(hass: HomeAssistant, entry: AskoheatConfigEntry)
 async def async_unload_entry(hass: HomeAssistant, entry: AskoheatConfigEntry) -> bool:
     if entry.runtime_data.heartbeat_task:
         entry.runtime_data.heartbeat_task.cancel()
+    await entry.runtime_data.client.close()
     return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
