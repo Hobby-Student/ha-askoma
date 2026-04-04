@@ -1,10 +1,26 @@
 """The Askoheat integration."""
 
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import Platform
-from homeassistant.core import HomeAssistant
+from __future__ import annotations
 
-from .const import DOMAIN
+import asyncio
+import logging
+from dataclasses import dataclass, field
+from datetime import timedelta
+from typing import Any
+
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import CONF_HOST, Platform
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
+
+from .api import AskoheatApiClient
+from .const import (
+    CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL, DOMAIN,
+    HEARTBEAT_INTERVAL, EMA_LOAD_SETPOINT_VALUE,
+)
+from .coordinator import AskoheatEmaCoordinator, AskoheatSlowCoordinator
+
+_LOGGER = logging.getLogger(__name__)
 
 PLATFORMS: list[Platform] = [
     Platform.BINARY_SENSOR,
@@ -17,12 +33,78 @@ PLATFORMS: list[Platform] = [
 ]
 
 
-async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+@dataclass
+class AskoheatData:
+    """Runtime data for the Askoheat integration."""
+    client: AskoheatApiClient
+    ema_coordinator: AskoheatEmaCoordinator
+    slow_coordinator: AskoheatSlowCoordinator
+    par_data: dict[str, Any]
+    connected_sensors: list[int]
+    heartbeat_task: asyncio.Task | None = None
+    last_setpoint: int = 0
+
+
+type AskoheatConfigEntry = ConfigEntry[AskoheatData]
+
+
+async def async_setup_entry(hass: HomeAssistant, entry: AskoheatConfigEntry) -> bool:
     """Set up Askoheat from a config entry."""
-    # Will be implemented in Task 3
+    host = entry.data[CONF_HOST]
+    scan_interval = entry.options.get(
+        CONF_SCAN_INTERVAL, entry.data.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
+    )
+
+    session = async_get_clientsession(hass)
+    client = AskoheatApiClient(host=host, session=session)
+
+    par_data = await client.get_par()
+    connected_sensors = await client.detect_connected_sensors()
+
+    ema_coordinator = AskoheatEmaCoordinator(
+        hass=hass, client=client, update_interval=timedelta(seconds=scan_interval),
+    )
+    slow_coordinator = AskoheatSlowCoordinator(hass=hass, client=client)
+
+    await ema_coordinator.async_config_entry_first_refresh()
+    await slow_coordinator.async_config_entry_first_refresh()
+
+    runtime_data = AskoheatData(
+        client=client,
+        ema_coordinator=ema_coordinator,
+        slow_coordinator=slow_coordinator,
+        par_data=par_data,
+        connected_sensors=connected_sensors,
+    )
+
+    runtime_data.heartbeat_task = entry.async_create_background_task(
+        hass, _heartbeat_loop(runtime_data), name="askoheat_heartbeat",
+    )
+
+    entry.runtime_data = runtime_data
+    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    entry.async_on_unload(entry.add_update_listener(_async_update_options))
     return True
 
 
-async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Unload a config entry."""
+async def _heartbeat_loop(data: AskoheatData) -> None:
+    """Re-send setpoint every 30s to prevent device timeout."""
+    while True:
+        await asyncio.sleep(HEARTBEAT_INTERVAL)
+        if data.last_setpoint > 0:
+            try:
+                await data.client.patch_ema(
+                    {EMA_LOAD_SETPOINT_VALUE: str(data.last_setpoint)}
+                )
+            except Exception:
+                _LOGGER.warning("Heartbeat failed for Askoheat")
+
+
+async def _async_update_options(hass: HomeAssistant, entry: AskoheatConfigEntry) -> None:
+    await hass.config_entries.async_reload(entry.entry_id)
+
+
+async def async_unload_entry(hass: HomeAssistant, entry: AskoheatConfigEntry) -> bool:
+    if entry.runtime_data.heartbeat_task:
+        entry.runtime_data.heartbeat_task.cancel()
     return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
