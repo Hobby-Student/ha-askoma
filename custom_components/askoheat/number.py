@@ -21,6 +21,8 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from . import AskoheatConfigEntry, AskoheatData
 from .const import (
+    PAR_HEATER1_POWER,
+    PAR_MAX_POWER,
     CON_AUTO_HEATER_OFF_MINUTES,
     CON_CASCADE_PRIO,
     CON_HEATBUFFER_VOLUME,
@@ -401,8 +403,29 @@ async def async_setup_entry(
     host: str = entry.data["host"]
     entities: list[NumberEntity] = []
 
-    # Power setpoint is a select entity (see select.py) — not a number,
-    # because valid power levels are discrete heater combinations.
+    # Power setpoint slider — step size from smallest heater element, max from device
+    try:
+        step_power = int(data.par_data.get(PAR_HEATER1_POWER, "250"))
+        max_power = int(data.par_data.get(PAR_MAX_POWER, "3000"))
+    except (ValueError, TypeError):
+        step_power = 250
+        max_power = 3000
+
+    power_slider_desc = AskoheatNumberEntityDescription(
+        key="power_setpoint_slider",
+        translation_key="power_setpoint_slider",
+        name="Power setpoint slider",
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=NumberDeviceClass.POWER,
+        native_min_value=0,
+        native_max_value=max_power,
+        native_step=step_power,
+        mode=NumberMode.SLIDER,
+        json_key=EMA_LOAD_SETPOINT_VALUE,
+        patch_target="ema",
+        coordinator_type="ema",
+    )
+    entities.append(AskoheatNumber(data, host, power_slider_desc))
 
     for desc in EMA_NUMBER_DESCRIPTIONS:
         entities.append(AskoheatNumber(data, host, desc))
