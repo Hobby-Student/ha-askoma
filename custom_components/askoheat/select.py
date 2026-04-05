@@ -24,9 +24,7 @@ from .const import (
     CON_TEMPERATURE_SETTING,
     EMA_LOAD_SETPOINT_VALUE,
     EMA_SET_HEATER_STEP,
-    PAR_HEATER1_POWER,
-    PAR_HEATER2_POWER,
-    PAR_HEATER3_POWER,
+    PAR_HEATER_POWERS,
     PAR_MAX_POWER,
     PAR_NUMBER_OF_HEATER,
     con_analog_threshold_step,
@@ -270,16 +268,15 @@ def _compute_power_steps(par_data: dict[str, Any]) -> list[int]:
     Each heater can be on or off independently. The valid power levels
     are all possible sums of heater powers (all non-empty subsets).
     """
-    heater_keys = [PAR_HEATER1_POWER, PAR_HEATER2_POWER, PAR_HEATER3_POWER]
     heater_powers: list[int] = []
 
-    num_heaters = 3
+    num_heaters = 6
     try:
-        num_heaters = int(par_data.get(PAR_NUMBER_OF_HEATER, "3"))
+        num_heaters = int(par_data.get(PAR_NUMBER_OF_HEATER, "6"))
     except (ValueError, TypeError):
         pass
 
-    for key in heater_keys[:num_heaters]:
+    for key in PAR_HEATER_POWERS[:num_heaters]:
         try:
             power = int(par_data.get(key, "0"))
             if power > 0:
