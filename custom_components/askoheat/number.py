@@ -21,8 +21,8 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from . import AskoheatConfigEntry, AskoheatData
 from .const import (
-    PAR_HEATER1_POWER,
     PAR_MAX_POWER,
+    PAR_NUMBER_OF_STEPS,
     CON_AUTO_HEATER_OFF_MINUTES,
     CON_CASCADE_PRIO,
     CON_HEATBUFFER_VOLUME,
@@ -403,13 +403,14 @@ async def async_setup_entry(
     host: str = entry.data["host"]
     entities: list[NumberEntity] = []
 
-    # Power setpoint slider — step size from smallest heater element, max from device
+    # Power setpoint slider — step size = max_power / number_of_steps
     try:
-        step_power = int(data.par_data.get(PAR_HEATER1_POWER, "250"))
         max_power = int(data.par_data.get(PAR_MAX_POWER, "3000"))
+        num_steps = int(data.par_data.get(PAR_NUMBER_OF_STEPS, "7"))
+        step_power = max_power // num_steps if num_steps > 0 else 250
     except (ValueError, TypeError):
-        step_power = 250
         max_power = 3000
+        step_power = 250
 
     power_slider_desc = AskoheatNumberEntityDescription(
         key="power_setpoint_slider",
