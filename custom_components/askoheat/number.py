@@ -40,8 +40,6 @@ from .const import (
     CON_TIMEZONE_BIAS,
     EMA_LOAD_FEEDIN_VALUE,
     EMA_LOAD_SETPOINT_VALUE,
-    PAR_HEATER1_POWER,
-    PAR_MAX_POWER,
     con_analog_threshold,
     con_analog_threshold_temp,
 )
@@ -403,29 +401,8 @@ async def async_setup_entry(
     host: str = entry.data["host"]
     entities: list[NumberEntity] = []
 
-    # Power setpoint — dynamic min/max/step from device parameters
-    try:
-        min_power = int(data.par_data.get(PAR_HEATER1_POWER, "250"))
-        max_power = int(data.par_data.get(PAR_MAX_POWER, "3000"))
-    except (ValueError, TypeError):
-        min_power = 250
-        max_power = 3000
-
-    power_setpoint_desc = AskoheatNumberEntityDescription(
-        key="power_setpoint",
-        translation_key="power_setpoint",
-        name="Power setpoint",
-        native_unit_of_measurement=UnitOfPower.WATT,
-        device_class=NumberDeviceClass.POWER,
-        native_min_value=0,
-        native_max_value=max_power,
-        native_step=min_power,
-        mode=NumberMode.SLIDER,
-        json_key=EMA_LOAD_SETPOINT_VALUE,
-        patch_target="ema",
-        coordinator_type="ema",
-    )
-    entities.append(AskoheatNumber(data, host, power_setpoint_desc))
+    # Power setpoint is a select entity (see select.py) — not a number,
+    # because valid power levels are discrete heater combinations.
 
     for desc in EMA_NUMBER_DESCRIPTIONS:
         entities.append(AskoheatNumber(data, host, desc))

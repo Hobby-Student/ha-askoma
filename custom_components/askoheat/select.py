@@ -3,12 +3,15 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import Any
 
 from homeassistant.components.select import SelectEntity, SelectEntityDescription
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from . import AskoheatConfigEntry, AskoheatData
+from itertools import combinations
+
 from .const import (
     CON_EMERGENCY_MODE_ON_STEP,
     CON_HEATBUFFER_TYPE,
@@ -19,7 +22,13 @@ from .const import (
     CON_LEGIO_SETTING,
     CON_RTU_ENERGY_METER_TYPE,
     CON_TEMPERATURE_SETTING,
+    EMA_LOAD_SETPOINT_VALUE,
     EMA_SET_HEATER_STEP,
+    PAR_HEATER1_POWER,
+    PAR_HEATER2_POWER,
+    PAR_HEATER3_POWER,
+    PAR_MAX_POWER,
+    PAR_NUMBER_OF_HEATER,
     con_analog_threshold_step,
 )
 from .entity import AskoheatEntity
@@ -245,7 +254,53 @@ class AskoheatSelect(AskoheatEntity, SelectEntity):
         else:
             await self._data.client.patch_con(payload)
 
+        # Update heartbeat tracking for power setpoint
+        if desc.json_key == EMA_LOAD_SETPOINT_VALUE:
+            try:
+                self._data.last_setpoint = int(reg_value)
+            except (ValueError, TypeError):
+                pass
+
         await self.coordinator.async_request_refresh()
+
+
+def _compute_power_steps(par_data: dict[str, Any]) -> list[int]:
+    """Compute all valid power levels from heater element combinations.
+
+    Each heater can be on or off independently. The valid power levels
+    are all possible sums of heater powers (all non-empty subsets).
+    """
+    heater_keys = [PAR_HEATER1_POWER, PAR_HEATER2_POWER, PAR_HEATER3_POWER]
+    heater_powers: list[int] = []
+
+    num_heaters = 3
+    try:
+        num_heaters = int(par_data.get(PAR_NUMBER_OF_HEATER, "3"))
+    except (ValueError, TypeError):
+        pass
+
+    for key in heater_keys[:num_heaters]:
+        try:
+            power = int(par_data.get(key, "0"))
+            if power > 0:
+                heater_powers.append(power)
+        except (ValueError, TypeError):
+            pass
+
+    if not heater_powers:
+        # Fallback: use max_power as single option
+        try:
+            return [int(par_data.get(PAR_MAX_POWER, "3000"))]
+        except (ValueError, TypeError):
+            return [3000]
+
+    # Generate all non-empty subsets and their sums
+    steps: set[int] = set()
+    for r in range(1, len(heater_powers) + 1):
+        for combo in combinations(heater_powers, r):
+            steps.add(sum(combo))
+
+    return sorted(steps)
 
 
 async def async_setup_entry(
@@ -257,6 +312,24 @@ async def async_setup_entry(
     data: AskoheatData = entry.runtime_data
     host: str = entry.data["host"]
     entities: list[SelectEntity] = []
+
+    # Power setpoint select — options derived from heater element combinations
+    power_steps = _compute_power_steps(data.par_data)
+    power_options = ["Off"] + [f"{w} W" for w in power_steps]
+    power_map = {"Off": "0"}
+    power_map.update({f"{w} W": str(w) for w in power_steps})
+
+    power_setpoint_desc = AskoheatSelectEntityDescription(
+        key="power_setpoint",
+        translation_key="power_setpoint",
+        name="Power setpoint",
+        options=power_options,
+        json_key=EMA_LOAD_SETPOINT_VALUE,
+        patch_target="ema",
+        coordinator_type="ema",
+        options_map=power_map,
+    )
+    entities.append(AskoheatSelect(data, host, power_setpoint_desc))
 
     for desc in EMA_SELECT_DESCRIPTIONS:
         entities.append(AskoheatSelect(data, host, desc))
