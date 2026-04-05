@@ -4,12 +4,12 @@
   "codeowners": [],
   "config_flow": true,
   "dependencies": [],
-  "documentation": "https://github.com/TODO/ha-askoheat",
+  "documentation": "https://github.com/Hobby-Student/ha-askoma",
   "homeassistant": "2026.4.0",
   "integration_type": "device",
   "iot_class": "local_polling",
   "requirements": [],
-  "version": "0.1.0",
+  "version": "1.0.0",
   "zeroconf": [
     {
       "type": "_http._tcp.local.",
