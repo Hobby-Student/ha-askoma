@@ -1,0 +1,173 @@
+{
+  "config": {
+    "flow_title": "Askoheat ({name})",
+    "step": {
+      "user": {
+        "title": "Mit Askoheat verbinden",
+        "description": "Geben Sie die IP-Adresse oder den Hostnamen Ihres Askoheat+ ein.",
+        "data": {
+          "host": "Host"
+        }
+      },
+      "zeroconf_confirm": {
+        "title": "Askoheat-Erkennung bestätigen",
+        "description": "Möchten Sie dieses Askoheat+ Gerät einrichten?"
+      }
+    },
+    "error": {
+      "cannot_connect": "Verbindung zum Askoheat fehlgeschlagen. Prüfen Sie die IP-Adresse und ob das Gerät online ist."
+    },
+    "abort": {
+      "already_configured": "Dieses Gerät ist bereits konfiguriert.",
+      "cannot_connect": "Verbindung zum Gerät nicht möglich."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Askoheat Optionen",
+        "data": {
+          "scan_interval": "Aktualisierungsintervall (Sekunden)"
+        }
+      }
+    }
+  },
+  "entity": {
+    "water_heater": {
+      "water_heater": { "name": "Warmwasserbereiter" }
+    },
+    "sensor": {
+      "temperature_sensor_0": { "name": "Temperatursensor 0" },
+      "temperature_sensor_1": { "name": "Temperatursensor 1" },
+      "temperature_sensor_2": { "name": "Temperatursensor 2" },
+      "temperature_sensor_3": { "name": "Temperatursensor 3" },
+      "temperature_sensor_4": { "name": "Temperatursensor 4" },
+      "temperature_sensor_5": { "name": "Temperatursensor 5" },
+      "heater_load": { "name": "Heizleistung" },
+      "load_setpoint": { "name": "Leistungssollwert" },
+      "analog_input": { "name": "Analogeingang" },
+      "operating_time": { "name": "Betriebszeit" },
+      "operating_heater1": { "name": "Betriebszeit Heizelement 1" },
+      "operating_heater2": { "name": "Betriebszeit Heizelement 2" },
+      "operating_heater3": { "name": "Betriebszeit Heizelement 3" },
+      "operating_pump": { "name": "Betriebszeit Pumpe" },
+      "relay1_count": { "name": "Relais 1 Schaltzyklen" },
+      "relay2_count": { "name": "Relais 2 Schaltzyklen" },
+      "relay3_count": { "name": "Relais 3 Schaltzyklen" },
+      "relay4_count": { "name": "Relais 4 Schaltzyklen" },
+      "boot_count": { "name": "Neustarts" },
+      "max_temperature": { "name": "Höchsttemperatur" },
+      "actual_temperature_limit": { "name": "Aktive Temperaturgrenze" },
+      "feedin_value": { "name": "Einspeisewert" },
+      "operating_set_heater_step": { "name": "Betriebszeit Heizstufe manuell" },
+      "operating_load_setpoint": { "name": "Betriebszeit Sollwert" },
+      "operating_load_feedin": { "name": "Betriebszeit Einspeisung" },
+      "operating_heat_pump_request": { "name": "Betriebszeit Wärmepumpe" },
+      "operating_analog_in": { "name": "Betriebszeit Analogeingang" },
+      "operating_emergency_mode": { "name": "Betriebszeit Notbetrieb" },
+      "operating_legio": { "name": "Betriebszeit Legionellenschutz" },
+      "operating_low_tariff": { "name": "Betriebszeit Niedertarif" },
+      "operating_minimal_temp": { "name": "Betriebszeit Mindesttemperatur" },
+      "operating_heater_step_1": { "name": "Betriebszeit Stufe 1" },
+      "operating_heater_step_2": { "name": "Betriebszeit Stufe 2" },
+      "operating_heater_step_3": { "name": "Betriebszeit Stufe 3" },
+      "operating_heater_step_4": { "name": "Betriebszeit Stufe 4" },
+      "operating_heater_step_5": { "name": "Betriebszeit Stufe 5" },
+      "operating_heater_step_6": { "name": "Betriebszeit Stufe 6" },
+      "operating_heater_step_7": { "name": "Betriebszeit Stufe 7" },
+      "set_heater_step_count": { "name": "Aktivierungen Heizstufe manuell" },
+      "load_setpoint_count": { "name": "Aktivierungen Sollwert" },
+      "load_feedin_count": { "name": "Aktivierungen Einspeisung" },
+      "heat_pump_request_count": { "name": "Aktivierungen Wärmepumpe" },
+      "analog_in_count": { "name": "Aktivierungen Analogeingang" },
+      "emergency_mode_count": { "name": "Aktivierungen Notbetrieb" },
+      "legio_count": { "name": "Legionellenschutz-Zyklen" },
+      "low_tariff_count": { "name": "Aktivierungen Niedertarif" },
+      "minimal_temp_count": { "name": "Aktivierungen Mindesttemperatur" }
+    },
+    "binary_sensor": {
+      "emergency_mode": { "name": "Notbetrieb" },
+      "heat_pump_request": { "name": "Wärmepumpenanforderung" },
+      "heater_relay_1": { "name": "Heizrelais 1" },
+      "heater_relay_2": { "name": "Heizrelais 2" },
+      "heater_relay_3": { "name": "Heizrelais 3" },
+      "legionella_active": { "name": "Legionellenschutz aktiv" },
+      "error_status": { "name": "Fehlerstatus" }
+    },
+    "switch": {
+      "input_analog_enabled": { "name": "Analogeingang aktiviert" },
+      "input_heat_pump_enabled": { "name": "Wärmepumpeneingang aktiviert" },
+      "input_emergency_enabled": { "name": "Notbetrieb-Eingang aktiviert" },
+      "input_setpoint_enabled": { "name": "Sollwert-Eingang aktiviert" },
+      "input_feedin_enabled": { "name": "Einspeise-Eingang aktiviert" },
+      "auto_off_setpoint": { "name": "Auto-Aus Sollwertmodus" },
+      "auto_off_feedin": { "name": "Auto-Aus Einspeisemodus" },
+      "auto_off_heat_pump": { "name": "Auto-Aus Wärmepumpenmodus" },
+      "auto_off_analog": { "name": "Auto-Aus Analogeingangmodus" },
+      "dst_switch": { "name": "Sommerzeit" }
+    },
+    "button": {
+      "identify": { "name": "Gerät identifizieren" },
+      "clear_sensor_errors": { "name": "Sensorfehler löschen" },
+      "reboot": { "name": "Gerät neustarten" }
+    },
+    "number": {
+      "power_setpoint_slider": { "name": "Leistungssollwert Schieberegler" },
+      "feedin_value_number": { "name": "Einspeisewert" },
+      "temperature_load_setpoint": { "name": "Temperaturgrenze Sollwert" },
+      "temperature_hysteresis": { "name": "Temperaturhysterese" },
+      "temperature_minimum": { "name": "Mindesttemperatur" },
+      "temperature_low_tariff": { "name": "Temperaturgrenze Niedertarif" },
+      "temperature_heat_pump_request": { "name": "Temperaturgrenze Wärmepumpe" },
+      "temperature_set_heater_step": { "name": "Temperaturgrenze Heizstufe" },
+      "legio_temperature": { "name": "Legionellentemperatur" },
+      "legio_heatup_minutes": { "name": "Legionellen-Aufheizzeit" },
+      "relay_sec_count": { "name": "Relais-Sperrzeit" },
+      "pump_sec_count": { "name": "Pumpennachlaufzeit" },
+      "auto_heater_off_minutes": { "name": "Auto-Aus Zeitüberschreitung" },
+      "load_feedin_delay": { "name": "Einspeisung Einschaltverzögerung" },
+      "load_feedin_bias": { "name": "Einspeisung Vorspannung" },
+      "timezone_bias": { "name": "Zeitzonenversatz" },
+      "heatbuffer_volume": { "name": "Pufferspeicher-Volumen" },
+      "household_members": { "name": "Haushaltsmitglieder" },
+      "cascade_prio": { "name": "Kaskadenpriorität" },
+      "analog_threshold_0": { "name": "Analogschwelle 0 Spannung" },
+      "analog_threshold_1": { "name": "Analogschwelle 1 Spannung" },
+      "analog_threshold_2": { "name": "Analogschwelle 2 Spannung" },
+      "analog_threshold_3": { "name": "Analogschwelle 3 Spannung" },
+      "analog_threshold_4": { "name": "Analogschwelle 4 Spannung" },
+      "analog_threshold_5": { "name": "Analogschwelle 5 Spannung" },
+      "analog_threshold_6": { "name": "Analogschwelle 6 Spannung" },
+      "analog_threshold_7": { "name": "Analogschwelle 7 Spannung" },
+      "analog_threshold_temp_0": { "name": "Analogschwelle 0 Temperatur" },
+      "analog_threshold_temp_1": { "name": "Analogschwelle 1 Temperatur" },
+      "analog_threshold_temp_2": { "name": "Analogschwelle 2 Temperatur" },
+      "analog_threshold_temp_3": { "name": "Analogschwelle 3 Temperatur" },
+      "analog_threshold_temp_4": { "name": "Analogschwelle 4 Temperatur" },
+      "analog_threshold_temp_5": { "name": "Analogschwelle 5 Temperatur" },
+      "analog_threshold_temp_6": { "name": "Analogschwelle 6 Temperatur" },
+      "analog_threshold_temp_7": { "name": "Analogschwelle 7 Temperatur" }
+    },
+    "select": {
+      "power_setpoint": { "name": "Leistungssollwert" },
+      "heater_step": { "name": "Heizstufe" },
+      "heatbuffer_type": { "name": "Pufferspeicher-Typ" },
+      "heater_position": { "name": "Einbauposition" },
+      "house_type": { "name": "Gebäudetyp" },
+      "heat_pump_off_step": { "name": "Wärmepumpe Aus-Stufe" },
+      "heat_pump_on_step": { "name": "Wärmepumpe Ein-Stufe" },
+      "emergency_mode_on_step": { "name": "Notbetrieb-Stufe" },
+      "legio_setting": { "name": "Legionellenschutz" },
+      "temperature_setting": { "name": "Temperatursensor-Auswahl" },
+      "energy_meter_type": { "name": "Energiezähler-Typ" },
+      "analog_threshold_step_0": { "name": "Analogschwelle 0 Stufe" },
+      "analog_threshold_step_1": { "name": "Analogschwelle 1 Stufe" },
+      "analog_threshold_step_2": { "name": "Analogschwelle 2 Stufe" },
+      "analog_threshold_step_3": { "name": "Analogschwelle 3 Stufe" },
+      "analog_threshold_step_4": { "name": "Analogschwelle 4 Stufe" },
+      "analog_threshold_step_5": { "name": "Analogschwelle 5 Stufe" },
+      "analog_threshold_step_6": { "name": "Analogschwelle 6 Stufe" },
+      "analog_threshold_step_7": { "name": "Analogschwelle 7 Stufe" }
+    }
+  }
+}

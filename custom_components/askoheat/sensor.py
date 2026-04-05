@@ -474,7 +474,7 @@ class AskoheatTemperatureSensor(AskoheatEntity, SensorEntity):
             key=f"temp_sensor_{sensor_index}",
         )
         self._sensor_index = sensor_index
-        self._attr_name = f"Temperature sensor {sensor_index}"
+        self._attr_translation_key = f"temperature_sensor_{sensor_index}"
 
     @property
     def native_value(self) -> float | None:

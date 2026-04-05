@@ -49,7 +49,7 @@ class AskoheatWaterHeater(AskoheatEntity, WaterHeaterEntity):
     _attr_operation_list = OPERATION_LIST
     _attr_min_temp = 0
     _attr_max_temp = 95
-    _attr_name = "Water heater"
+    _attr_translation_key = "water_heater"
 
     def __init__(self, data: AskoheatData, host: str) -> None:
         """Initialize the water heater."""

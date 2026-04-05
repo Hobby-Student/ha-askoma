@@ -155,7 +155,7 @@ class AskoheatBitSwitch(AskoheatEntity, SwitchEntity):
 class AskoheatDstSwitch(AskoheatEntity, SwitchEntity):
     """Switch for daylight saving time (summertime bias)."""
 
-    _attr_name = "Daylight saving time"
+    _attr_translation_key = "dst_switch"
 
     def __init__(self, data: AskoheatData, host: str) -> None:
         """Initialize."""
